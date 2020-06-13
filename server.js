@@ -1,13 +1,15 @@
 const express = require("express");
-const crypto = require("crypto");
+const redis = require("redis");
 const { promisify } = require("util");
+const helper = require("./helper.js");
 
 const app = express();
 
 const server = require("http").createServer(app);
 const io = require("socket.io")(server);
-const redis = require("redis");
+
 const PORT = 4000;
+const expiryInSeconds = 3600;
 
 let redisClient = redis.createClient(6379, "127.0.0.1");
 const aget = promisify(redisClient.get).bind(redisClient);
@@ -21,13 +23,15 @@ app.get("/index", (req, res) => {
 });
 
 app.get("/generateraceAPI", (req, res) => {
-  let hash = crypto.randomBytes(20).toString("hex");
+  let hash = helper.generateNewHash();
   redisClient.get(hash, (err, room) => {
     if (room == null) {
       data = {
-        hash: crypto.randomBytes(20).toString("hex"),
+        hash: hash,
       };
       res.json(data);
+    } else {
+      generateNewHash(previoushash);
     }
   });
 });
@@ -68,29 +72,30 @@ io.on("connection", (socket) => {
     return aget(room)
       .then((res) => {
         if (res != null) {
-          console.log("1st");
           res = JSON.parse(res);
           userDetails = {};
           userDetails.name = username;
           userDetails.socketId = socket.id;
           res.push(userDetails);
-          redisClient.set(room, JSON.stringify(res));
+          redisClient.set(room, JSON.stringify(res), "EX", expiryInSeconds);
           return;
         } else {
           newRoom = {};
           userDetails = {};
           userDetails.name = username;
           userDetails.socketId = socket.id;
-          redisClient.set(room, JSON.stringify([userDetails]));
-
+          redisClient.set(
+            room,
+            JSON.stringify([userDetails]),
+            "EX",
+            expiryInSeconds
+          );
           return;
         }
       })
       .then((_) => {
-        console.log("Triggered");
         redisClient.get(room, (err, res) => {
           res = JSON.parse(res);
-          console.log(res);
           usernames = res.map((userData) => {
             return userData.name;
           });
@@ -103,6 +108,9 @@ io.on("connection", (socket) => {
 
           io.to(room).emit("userjoined", serverData);
         });
+      })
+      .catch((err) => {
+        console.log(err);
       });
   });
 
