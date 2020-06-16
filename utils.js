@@ -15,7 +15,6 @@ const TFSBackendURL = "http://127.0.0.1:8000/paraForRaceTrack";
 
 let raceRooms = redis.createClient(6379, "127.0.0.1");
 let paraTypedByUser = redis.createClient();
-console.log("UTILS");
 const syncraceget = promisify(raceRooms.get).bind(raceRooms);
 
 module.exports = {

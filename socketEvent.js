@@ -8,8 +8,6 @@ const {
   TFSBackendURL,
 } = require("./utils.js");
 
-console.log("EVENTS");
-
 exports.disconnect = function (socket) {
   socket.on("disconnect", () => {
     raceRooms.keys("*", (err, rooms) => {
@@ -19,7 +17,7 @@ exports.disconnect = function (socket) {
           for (let j = 0; j < json_data.length; j++) {
             if (socket.id == json_data[j].socketId) {
               io.to(rooms[i]).emit(
-                "disconnected",
+                "DISCONNECTED",
                 `${json_data[j].name} has left the race`
               );
               json_data.splice(j, 1);
@@ -38,7 +36,7 @@ exports.createorjoinroom = function (socket) {
   socket.on("create/join", async ({ room, username }) => {
     /*  
             {
-              'room1':8ms,[{'user1:'name'},{'user2':'name'}],
+              'room1':[189351,{'user1:'name'},{'user2':'name'}],
               'room2':{'user3':'name','user4':'name'},
             } 
         */
@@ -82,6 +80,7 @@ exports.createorjoinroom = function (socket) {
           if (userAddedInRedis == true) {
             socket.join(room);
 
+            // To get the clients of the room stored in the socket
             // io.of("/")
             //   .in(room)
             //   .clients((err, client) => {
@@ -118,17 +117,18 @@ exports.createorjoinroom = function (socket) {
 exports.startrace = function (socket) {
   socket.on("START_RACE", ({ room }) => {
     startRace = true;
+    userintheroom = [];
     let paraTypedByTheUserInTheRoom = [];
 
     return syncraceget(room)
       .then((res) => {
         return new Promise((resolve) => {
           jsonData = JSON.parse(res);
-          console.log(jsonData[0]);
           jsonData[0] != true ? jsonData.unshift(true) : null;
           raceRooms.set(room, JSON.stringify(jsonData));
           for (userDetails of jsonData) {
             if (userDetails.name != undefined) {
+              userintheroom.push(userDetails.name);
               paraTypedByUser.get(userDetails.name, (err, res) => {
                 if (res == null) {
                   paraTypedByUser.set(
@@ -156,19 +156,29 @@ exports.startrace = function (socket) {
             if (err) {
               console.log(err);
             } else {
-              console.log(res.body);
-              io.in(room).emit("USER_JOINED", res.body);
+              paraFetchedId = JSON.parse(res.body).id;
+              for (user of userintheroom) {
+                paraTypedByUser.get(user, (err, res) => {
+                  jsonRes = JSON.parse(res);
+                  jsonRes.push(paraFetchedId);
+                  paraTypedByUser.set(user, JSON.stringify(jsonRes));
+                });
+              }
+              io.in(room).emit("PARA", res.body);
             }
           }
         );
+      })
+      .catch((err) => {
+        console.log(err);
       });
   });
 };
 
 exports.typing = function (socket) {
-  socket.on("Typing", ({ room, message }) => {
+  socket.on("TYPING", ({ room, message }) => {
     console.log(message);
-    socket.to(room).emit("Typing", message);
+    socket.to(room).emit("TYPING", message);
   });
 };
 

@@ -2,7 +2,6 @@ const { helper, io, PORT, raceRooms, app, server } = require("./utils.js");
 
 const socketEvent = require("./socketEvent.js");
 
-console.log("SERVER");
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/client.html");
 });
