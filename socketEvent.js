@@ -4,9 +4,9 @@ const {
   raceRooms,
   syncraceget,
   paraTypedByUser,
-  expiryInSeconds,
-  TFSBackendURL,
 } = require("./utils.js");
+
+const { expiryInSeconds, TFSBackendURL } = require("./constants.js");
 
 exports.disconnect = function (socket) {
   socket.on("disconnect", () => {
@@ -36,10 +36,11 @@ exports.createorjoinroom = function (socket) {
   socket.on("create/join", async ({ room, username }) => {
     /*  
             {
-              'room1':[189351,{'user1:'name'},{'user2':'name'}],
-              'room2':{'user3':'name','user4':'name'},
+              'room1':[189351,{'user1':'name'},{'user2':'name'}],
+              'room2':[315153,{'user3':'name'},{'user4':'name'}],
             } 
-        */
+    */
+
     userExistsAlready = io.sockets.adapter.sids[socket.id][room];
     if (userExistsAlready) {
       io.to(socket.id).emit(
@@ -119,6 +120,7 @@ exports.startrace = function (socket) {
     startRace = true;
     userintheroom = [];
     let paraTypedByTheUserInTheRoom = [];
+    let uniqueParaTypedByTheUserInTheRoom = [];
 
     return syncraceget(room)
       .then((res) => {
@@ -131,14 +133,15 @@ exports.startrace = function (socket) {
               userintheroom.push(userDetails.name);
               paraTypedByUser.get(userDetails.name, (err, res) => {
                 if (res == null) {
-                  paraTypedByUser.set(
-                    userDetails.name,
-                    JSON.stringify([1, 2, 3])
-                  );
+                  paraTypedByUser.set(userDetails.name, "[]");
                   resolve();
                 } else {
                   res = JSON.parse(res);
                   paraTypedByTheUserInTheRoom.push(...res);
+                  removedDuplicateValues = new Set(paraTypedByTheUserInTheRoom);
+                  uniqueParaTypedByTheUserInTheRoom = [
+                    ...removedDuplicateValues,
+                  ];
                   resolve();
                 }
               });
@@ -150,7 +153,7 @@ exports.startrace = function (socket) {
         request.get(
           {
             url: TFSBackendURL,
-            qs: { data: JSON.stringify(paraTypedByTheUserInTheRoom) },
+            qs: { data: JSON.stringify(uniqueParaTypedByTheUserInTheRoom) },
           },
           (err, res, body) => {
             if (err) {
@@ -160,7 +163,9 @@ exports.startrace = function (socket) {
               for (user of userintheroom) {
                 paraTypedByUser.get(user, (err, res) => {
                   jsonRes = JSON.parse(res);
-                  jsonRes.push(paraFetchedId);
+                  jsonRes.includes(paraFetchedId)
+                    ? null
+                    : jsonRes.push(paraFetchedId);
                   paraTypedByUser.set(user, JSON.stringify(jsonRes));
                 });
               }

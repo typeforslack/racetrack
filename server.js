@@ -1,6 +1,8 @@
-const { helper, io, PORT, raceRooms, app, server } = require("./utils.js");
+const { io, raceRooms, app, server } = require("./utils.js");
+const { PORT } = require("./constants.js");
 
 const socketEvent = require("./socketEvent.js");
+const helper = require("./helper.js");
 
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/client.html");
@@ -10,17 +12,20 @@ app.get("/index", (req, res) => {
   res.send("Testing");
 });
 
-app.get("/generateraceAPI", (req, res) => {
+app.get("/createRaceRoom", (req, res) => {
   let hash = helper.generateNewHash();
   raceRooms.get(hash, (err, room) => {
     if (room == null) {
       data = {
         hash: hash,
       };
-      res.json(data);
     } else {
-      generateNewHash(previoushash);
+      newhash = helper.generateNewHash(hash);
+      data = {
+        hash: newhash,
+      };
     }
+    res.json(data);
   });
 });
 
