@@ -36,7 +36,7 @@ exports.createorjoinroom = function (socket) {
   socket.on("create/join", async ({ room, username }) => {
     /*  
             {
-              'room1':[189351,{'user1':'name'},{'user2':'name'}],
+              'room1':{isStarted:true,timestamp:123345,users:[{'user1':'name'},{'user2':'name'}]}
               'room2':[315153,{'user3':'name'},{'user4':'name'}],
             } 
     */
@@ -58,12 +58,13 @@ exports.createorjoinroom = function (socket) {
               userDetails.socketId = socket.id;
               res.push(userDetails);
               raceRooms.set(room, JSON.stringify(res));
-              return;
+              return res;
             } else {
               io.to(socket.id).emit("RACE_STARTED", "Race has already started");
               return false;
             }
           } else {
+            // Trigger ROOM_NOT_FOUND
             time = Math.floor(Date.now() / 1000);
             userDetails = {};
             userDetails.name = username;
@@ -74,11 +75,11 @@ exports.createorjoinroom = function (socket) {
               "EX",
               expiryInSeconds
             );
-            return;
+            return [userDetails];
           }
         })
-        .then((userAddedInRedis = true) => {
-          if (userAddedInRedis == true) {
+        .then((createdRoom) => {
+          if (createdRoom) {
             socket.join(room);
 
             // To get the clients of the room stored in the socket
@@ -87,25 +88,21 @@ exports.createorjoinroom = function (socket) {
             //   .clients((err, client) => {
             //     console.log(client);
             //   });
+            usernames = createdRoom
+              .map((userData) => {
+                if (userData.name != undefined) {
+                  return userData.name;
+                }
+              })
+              .filter((data) => data != null);
 
-            raceRooms.get(room, (err, res) => {
-              res = JSON.parse(res);
-              usernames = res
-                .map((userData) => {
-                  if (userData.name != undefined) {
-                    return userData.name;
-                  }
-                })
-                .filter((data) => data != null);
+            let serverData = {
+              room: room,
+              userInTheRoom: [usernames],
+            };
+            console.log("Joined");
 
-              let serverData = {
-                room: room,
-                userInTheRoom: [usernames],
-              };
-              console.log("Joined");
-
-              io.in(room).emit("USER_JOINED", serverData);
-            });
+            io.in(room).emit("USER_JOINED", serverData);
           }
         })
         .catch((err) => {
