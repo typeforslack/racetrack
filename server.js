@@ -1,5 +1,5 @@
 const { io, raceRooms, app, server } = require("./utils.js");
-const { PORT } = require("./constants.js");
+const { expiryInSeconds, PORT } = require("./constants.js");
 
 const socketEvent = require("./socketEvent.js");
 const helper = require("./helper.js");
@@ -15,16 +15,28 @@ app.get("/index", (req, res) => {
 app.get("/createRaceRoom", (req, res) => {
   let hash = helper.generateNewHash();
   raceRooms.get(hash, (err, room) => {
-    if (room == null) {
-      data = {
-        hash: hash,
-      };
-    } else {
-      newhash = helper.generateNewHash(hash);
-      data = {
-        hash: newhash,
-      };
+    if (room != null) {
+      hash = helper.generateNewHash(hash);
     }
+    data = {
+      hash: hash,
+    };
+    dataStoredInTheRaceRoom = {
+      timestamp: Math.floor(Date.now() / 1000),
+      users: [],
+    };
+    /*
+      {
+        room1:{timestamp:4426425143,users:[]}
+      }
+
+    */
+    raceRooms.set(
+      hash,
+      JSON.stringify(dataStoredInTheRaceRoom),
+      "EX",
+      expiryInSeconds
+    );
     res.json(data);
   });
 });

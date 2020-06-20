@@ -9,7 +9,7 @@ const server = require("http").createServer(app);
 const io = require("socket.io")(server);
 
 let raceRooms = redis.createClient(6379, "127.0.0.1");
-let paraTypedByUser = redis.createClient();
+let paraTypedByUser = redis.createClient(7000, "127.0.0.1");
 const syncraceget = promisify(raceRooms.get).bind(raceRooms);
 
 module.exports = {
