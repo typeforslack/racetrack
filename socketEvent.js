@@ -11,11 +11,9 @@ const { TFSBackendURL } = require("./constants.js");
 exports.disconnect = function (socket) {
   socket.on("disconnect", () => {
     raceRooms.keys("*", (err, rooms) => {
-      console.log(rooms);
       for (let i = 0; i < rooms.length; i++) {
         raceRooms.get(rooms[i], (err, userintheroom) => {
           json_data = JSON.parse(userintheroom);
-          console.log(json_data);
           for (let j = 0; j < json_data.users.length; j++) {
             if (socket.id == json_data.users[j].socketId) {
               io.to(rooms[i]).emit(
@@ -55,7 +53,7 @@ exports.createorjoinroom = function (socket) {
         .then((res) => {
           if (res != null) {
             res = JSON.parse(res);
-            if (res[0] != true) {
+            if (res.isStarted != true) {
               userDetails = {};
               userDetails.name = username;
               userDetails.socketId = socket.id;
@@ -84,24 +82,21 @@ exports.createorjoinroom = function (socket) {
 
             // Getting the Updated value of the users in the room
 
-            raceRooms.get(room, (err, res) => {
-              res = JSON.parse(res);
-              usernames = res.users
-                .map((userData) => {
-                  if (userData.name != undefined) {
-                    return userData.name;
-                  }
-                })
-                .filter((data) => data != null);
+            usernames = createdRoom.users
+              .map((userData) => {
+                if (userData.name != undefined) {
+                  return userData.name;
+                }
+              })
+              .filter((data) => data != null);
 
-              let serverData = {
-                room: room,
-                userInTheRoom: usernames,
-              };
-              console.log("Joined");
+            let serverData = {
+              room: room,
+              userInTheRoom: usernames,
+            };
+            console.log("Joined");
 
-              io.in(room).emit("USER_JOINED", serverData);
-            });
+            io.in(room).emit("USER_JOINED", serverData);
           }
         })
         .catch((err) => {
