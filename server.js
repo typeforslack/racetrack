@@ -1,5 +1,6 @@
 const { io, raceRooms, app, server } = require("./utils.js");
 const { expiryInSeconds, PORT } = require("./constants.js");
+const redis = require("./redisHelper.js");
 
 const socketEvent = require("./socketEvent.js");
 const helper = require("./helper.js");
@@ -14,7 +15,7 @@ app.get("/index", (req, res) => {
 
 app.get("/createRaceRoom", (req, res) => {
   let hash = helper.generateNewHash();
-  raceRooms.get(hash, (err, room) => {
+  redis.get(hash).then((err, room) => {
     if (room != null) {
       hash = helper.generateNewHash(hash);
     }
@@ -31,8 +32,8 @@ app.get("/createRaceRoom", (req, res) => {
       }
 
     */
-    raceRooms.set(
-      hash,
+    redis.set(
+      `room-${hash}`,
       JSON.stringify(dataStoredInTheRaceRoom),
       "EX",
       expiryInSeconds

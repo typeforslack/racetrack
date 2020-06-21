@@ -3,26 +3,26 @@ const redis = require("./redisHelper");
 const { getTypingPara } = require("./helper");
 
 exports.disconnect = function (socket) {
-  socket.on("disconnect", () => {
-    redis.keys("room-*").then((err, rooms) => {
-      for (let i = 0; i < rooms.length; i++) {
-        redis.get(rooms[i]).then((err, userintheroom) => {
-          console.log(rooms);
-          json_data = JSON.parse(userintheroom);
-          for (let j = 0; j < json_data.users.length; j++) {
-            if (socket.id == json_data.users[j].socketId) {
-              io.to(rooms[i]).emit(
-                "DISCONNECTED",
-                `${json_data.users[j].name} has left the race`,
-              );
-              json_data.users.splice(j, 1);
-              redis.set(rooms[i], JSON.stringify(json_data));
-              console.log(json_data);
-            }
+  socket.on("disconnecting", () => {
+    let disconnectingUser = io.sockets.adapter.sids[socket.id];
+
+    let disconnectingUserRoom = Object.keys(disconnectingUser)[1];
+    if (disconnectingUserRoom) {
+      redis.get(disconnectingUserRoom).then((data) => {
+        jsonData = JSON.parse(data);
+        for (let i = 0; i < jsonData.users.length; i++) {
+          if (jsonData.users[i].socketId == socket.id) {
+            io.to(disconnectingUserRoom).emit(
+              "DISCONNECTED",
+              `${jsonData.users[i].name} has left the race`
+            );
+            jsonData.users.splice(i, 1);
+            redis.set(disconnectingUserRoom, JSON.stringify(jsonData));
           }
-        });
-      }
-    });
+        }
+      });
+    }
+
     console.log("Disconnected");
   });
 };
@@ -36,16 +36,17 @@ exports.createorjoinroom = function (socket) {
             } 
     */
 
-    userExistsAlready = io.sockets.adapter.sids[socket.id][room];
+    userExistsAlready = io.sockets.adapter.sids[socket.id][`room-${room}`];
     if (userExistsAlready) {
       io.to(socket.id).emit(
         "ALREADY_JOINED",
-        "You have already joined the room!",
+        "You have already joined the room!"
       );
     } else {
       return redis
         .getRoom(room)
         .then((res) => {
+          room = "room-" + room;
           if (res === null) {
             io.to(socket.id).emit("USER_JOINED", "Room doesn't exists");
             return false;
@@ -63,10 +64,9 @@ exports.createorjoinroom = function (socket) {
           userDetails.socketId = socket.id;
           res.users.push(userDetails);
           redis.set(room, JSON.stringify(res));
-
           socket.join(room);
 
-          usernames = createdRoom.users.map((user) => user.name);
+          usernames = res.users.map((user) => user.name);
           let serverData = {
             room: room,
             userInTheRoom: usernames,
@@ -88,17 +88,20 @@ exports.startrace = function (socket) {
     return redis
       .getRoom(room)
       .then((res) => {
+        room = "room-" + room;
         redisRoom = JSON.parse(res);
         redisRoom.isStarted !== true ? (redisRoom.isStarted = true) : null;
-        raceRooms.set(room, JSON.stringify(redisRoom));
+        redis.set(room, JSON.stringify(redisRoom));
 
         usernames = redisRoom.users.map((user) => user.name);
         return redis.getParasTypedByTheseUsers(usernames);
       })
-      .then((parasTyped) => getTypingPara(parasTyped))
+      .then((parasTyped) => {
+        return getTypingPara(parasTyped);
+      })
       .then((newPara) => {
         redis.setParaTypedByTheseUsers(usernames, newPara.id);
-        io.in(room).emit("PARA", res.body);
+        io.in(room).emit("PARA", newPara.para);
       })
       .catch((err) => {
         console.log(err);

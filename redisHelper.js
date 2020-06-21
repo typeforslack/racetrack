@@ -20,18 +20,18 @@ const getParasTypedByTheseUsers = (usernames) => {
 
   for (username of usernames) {
     promises.push(
-      getParasTyped(username).then((err, res) => {
+      getParasTyped(username).then((res) => {
         if (res != null) {
           res = JSON.parse(res);
           paraTypedByTheUserInTheRoom.push(...res);
         }
-      }),
+      })
     );
   }
-
-  Promise.all(promises).then(() => {
+  return Promise.all(promises).then(() => {
     removedDuplicateValues = new Set(paraTypedByTheUserInTheRoom);
     uniqueParaTypedByTheUserInTheRoom = [...removedDuplicateValues];
+    return uniqueParaTypedByTheUserInTheRoom;
   });
 };
 
@@ -40,12 +40,11 @@ const setParaTypedByTheseUsers = (usernames, paraFetchedId) => {
 
   for (user of usernames) {
     promises.push(
-      getParasTyped(user).then((err, res) => {
+      getParasTyped(user).then((res) => {
         jsonRes = res != null ? JSON.parse(res) : [];
         jsonRes.includes(paraFetchedId) ? null : jsonRes.push(paraFetchedId);
-
         setParasTyped(user, JSON.stringify(jsonRes));
-      }),
+      })
     );
   }
 
@@ -58,4 +57,5 @@ module.exports = {
   keys,
   getRoom,
   getParasTypedByTheseUsers,
+  setParaTypedByTheseUsers,
 };
