@@ -5,8 +5,8 @@ const { getTypingPara } = require("./helper");
 exports.disconnect = function (socket) {
   socket.on("disconnecting", () => {
     let disconnectingUser = io.sockets.adapter.sids[socket.id];
-
     let disconnectingUserRoom = Object.keys(disconnectingUser)[1];
+
     if (disconnectingUserRoom) {
       redis.get(disconnectingUserRoom).then((data) => {
         jsonData = JSON.parse(data);

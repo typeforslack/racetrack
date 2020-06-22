@@ -1,17 +1,8 @@
-const crypto = require("crypto");
+const uuid = require("uuid");
 const request = require("request");
 const constants = require("./constants");
 
-exports.generateNewHash = function generateNewHash(previousHash) {
-  let hash = crypto.randomBytes(20).toString("hex");
-  if (hash == previousHash) {
-    generateNewHash(hash);
-  } else {
-    return hash;
-  }
-};
-
-exports.getTypingPara = function (parasTyped) {
+const getTypingPara = function (parasTyped) {
   return new Promise((res, rej) => {
     request.get(
       {
@@ -25,7 +16,12 @@ exports.getTypingPara = function (parasTyped) {
         }
 
         res(JSON.parse(response.body));
-      },
+      }
     );
   });
+};
+
+module.exports = {
+  getTypingPara,
+  uuid,
 };
