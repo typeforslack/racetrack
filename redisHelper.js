@@ -1,5 +1,7 @@
 const client = require("redis");
 const { promisify } = require("util");
+const { getTypingPara } = require("./helper");
+const { io } = require("./utils.js");
 
 const redis = client.createClient(6379, "127.0.0.1");
 const get = promisify(redis.get).bind(redis);
@@ -18,7 +20,7 @@ const getParasTypedByTheseUsers = (usernames) => {
   const paraTypedByTheUserInTheRoom = [];
   const promises = [];
 
-  for (username of usernames) {
+  usernames.forEach((username) => {
     promises.push(
       getParasTyped(username).then((res) => {
         if (res != null) {
@@ -27,7 +29,7 @@ const getParasTypedByTheseUsers = (usernames) => {
         }
       })
     );
-  }
+  });
   return Promise.all(promises).then(() => {
     removedDuplicateValues = new Set(paraTypedByTheUserInTheRoom);
     uniqueParaTypedByTheUserInTheRoom = [...removedDuplicateValues];
@@ -37,8 +39,7 @@ const getParasTypedByTheseUsers = (usernames) => {
 
 const setParaTypedByTheseUsers = (usernames, paraFetchedId) => {
   const promises = [];
-
-  for (user of usernames) {
+  usernames.forEach((user) => {
     promises.push(
       getParasTyped(user).then((res) => {
         jsonRes = res != null ? JSON.parse(res) : [];
@@ -46,9 +47,29 @@ const setParaTypedByTheseUsers = (usernames, paraFetchedId) => {
         setParasTyped(user, JSON.stringify(jsonRes));
       })
     );
-  }
+  });
 
   return Promise.all(promises);
+};
+
+const sendPara = (room) => {
+  let usernames = [];
+  return get(room)
+    .then((res) => {
+      redisRoom = JSON.parse(res);
+      redisRoom.isStarted !== true ? (redisRoom.isStarted = true) : null;
+      set(room, JSON.stringify(redisRoom));
+
+      usernames = redisRoom.users.map((user) => user.name);
+      return getParasTypedByTheseUsers(usernames);
+    })
+    .then((parasTyped) => {
+      return getTypingPara(parasTyped);
+    })
+    .then((newPara) => {
+      setParaTypedByTheseUsers(usernames, newPara.id);
+      io.in(room).emit("PARA", newPara.para);
+    });
 };
 
 module.exports = {
@@ -58,4 +79,5 @@ module.exports = {
   getRoom,
   getParasTypedByTheseUsers,
   setParaTypedByTheseUsers,
+  sendPara,
 };
