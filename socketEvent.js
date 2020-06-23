@@ -1,6 +1,5 @@
 const { io } = require("./utils.js");
 const redis = require("./redisHelper");
-const { getTypingPara } = require("./helper");
 
 exports.disconnect = function (socket) {
   socket.on("disconnecting", () => {
@@ -83,29 +82,10 @@ exports.createorjoinroom = function (socket) {
 
 exports.startrace = function (socket) {
   socket.on("START_RACE", ({ room }) => {
-    let usernames = [];
-
-    return redis
-      .getRoom(room)
-      .then((res) => {
-        room = "room-" + room;
-        redisRoom = JSON.parse(res);
-        redisRoom.isStarted !== true ? (redisRoom.isStarted = true) : null;
-        redis.set(room, JSON.stringify(redisRoom));
-
-        usernames = redisRoom.users.map((user) => user.name);
-        return redis.getParasTypedByTheseUsers(usernames);
-      })
-      .then((parasTyped) => {
-        return getTypingPara(parasTyped);
-      })
-      .then((newPara) => {
-        redis.setParaTypedByTheseUsers(usernames, newPara.id);
-        io.in(room).emit("PARA", newPara.para);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    room = "room-" + room;
+    redis.sendPara(room).catch((err) => {
+      console.log(err);
+    });
   });
 };
 
