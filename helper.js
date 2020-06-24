@@ -1,23 +1,18 @@
 const uuid = require("uuid");
-const request = require("request");
+const axios = require("axios");
 const constants = require("./constants");
 
 const getTypingPara = function (parasTyped) {
   return new Promise((res, rej) => {
-    request.get(
-      {
-        url: constants.TFSBackendURL,
-        qs: { data: JSON.stringify(parasTyped) },
-      },
-      (err, response) => {
-        if (err) {
-          rej(err);
-          return;
-        }
-
-        res(JSON.parse(response.body));
-      }
-    );
+    axios
+      .get(constants.TFSBackendURL, {
+        params: { data: JSON.stringify(parasTyped) },
+      })
+      .then((response) => {
+        const jsonBody = JSON.parse(response.body);
+        res(jsonBody);
+      })
+      .catch((err) => rej(err));
   });
 };
 
