@@ -21,7 +21,20 @@ const getTypingPara = function (parasTyped) {
   });
 };
 
+const createUserDataObject = (userDetails) => {
+  let room = "random-race-room-" + uuid.v1();
+  let timestamp = Math.floor(Date.now() / 1000);
+  let usercount = 1;
+  let dataStoredInTheRoom = {
+    usercount,
+    timestamp,
+    users: [userDetails],
+  };
+  return { room, dataStoredInTheRoom };
+};
+
 module.exports = {
   getTypingPara,
   uuid,
+  createUserDataObject,
 };
