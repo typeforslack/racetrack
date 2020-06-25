@@ -1,5 +1,6 @@
 const client = require("redis");
 const mockClient = require("redis-mock");
+const { expiryInSeconds } = require("./constants");
 const { promisify } = require("util");
 const { getTypingPara } = require("./helper");
 
@@ -14,6 +15,7 @@ const redis = getClient(process.env.ENV);
 const get = promisify(redis.get).bind(redis);
 const set = promisify(redis.set).bind(redis);
 const keys = promisify(redis.keys).bind(redis);
+const expire = promisify(redis.expire).bind(redis);
 
 const getRoom = (hash) => get("room-" + hash);
 const getParasTyped = (username) => get(username + "-paras");
@@ -64,7 +66,12 @@ const sendPara = (room) => {
     .then((res) => {
       redisRoom = JSON.parse(res);
       redisRoom.isStarted !== true ? (redisRoom.isStarted = true) : null;
-      set(room, JSON.stringify(redisRoom));
+      set(room, JSON.stringify(redisRoom)).then((reply) => {
+        if (reply) {
+          expire(room, expiryInSeconds);
+        }
+      });
+
       usernames = redisRoom.users.map((user) => user.name);
       return getParasTypedByTheseUsers(usernames);
     })
@@ -77,6 +84,8 @@ module.exports = {
   get,
   set,
   keys,
+  expire,
+  del,
   getRoom,
   getParasTypedByTheseUsers,
   setParaTypedByTheseUsers,
