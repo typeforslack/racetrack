@@ -1,10 +1,12 @@
 const client = require("redis");
+const redisScan = require("node-redis-scan");
 const { expiryInSeconds } = require("./constants");
 const { promisify } = require("util");
-const { getTypingPara } = require("./helper");
+const { getTypingPara, createUserDataObject } = require("./helper");
 const { io } = require("./utils.js");
 
 const redis = client.createClient(6379, "127.0.0.1");
+const scanner = new redisScan(redis);
 const get = promisify(redis.get).bind(redis);
 const set = promisify(redis.set).bind(redis);
 const keys = promisify(redis.keys).bind(redis);
@@ -78,14 +80,26 @@ const sendPara = (room) => {
     });
 };
 
+const createRoomForRandomRace = (userDetails) => {
+  let { room, dataStoredInTheRoom } = createUserDataObject(userDetails);
+
+  set(room, JSON.stringify(dataStoredInTheRoom)).then((reply) => {
+    if (reply) {
+      expire(room, expiryInSeconds);
+    }
+  });
+  return room;
+};
+
 module.exports = {
+  scanner,
   get,
   set,
   keys,
   expire,
-  del,
   getRoom,
   getParasTypedByTheseUsers,
   setParaTypedByTheseUsers,
+  createRoomForRandomRace,
   sendPara,
 };

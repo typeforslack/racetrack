@@ -4,21 +4,24 @@ const redis = require("./redisHelper");
 exports.disconnect = function (socket) {
   socket.on("disconnecting", () => {
     let disconnectingUser = io.sockets.adapter.sids[socket.id];
-    let disconnectingUserRoom = Object.keys(disconnectingUser)[1];
+    let disconnectingUserRoom = Object.keys(disconnectingUser).slice(1);
 
     if (disconnectingUserRoom) {
-      redis.get(disconnectingUserRoom).then((data) => {
-        jsonData = JSON.parse(data);
-        for (let i = 0; i < jsonData.users.length; i++) {
-          if (jsonData.users[i].socketId == socket.id) {
-            io.to(disconnectingUserRoom).emit(
-              "DISCONNECTED",
-              `${jsonData.users[i].name} has left the race`
-            );
-            jsonData.users.splice(i, 1);
-            redis.set(disconnectingUserRoom, JSON.stringify(jsonData));
+      disconnectingUserRoom.forEach((room) => {
+        redis.get(room).then((data) => {
+          jsonData = JSON.parse(data);
+          for (let i = 0; i < jsonData.users.length; i++) {
+            if (jsonData.users[i].socketId == socket.id) {
+              jsonData.usercount ? (jsonData.usercount -= 1) : null;
+              io.to(room).emit(
+                "DISCONNECTED",
+                `${jsonData.users[i].name} has left the race`
+              );
+              jsonData.users.splice(i, 1);
+              redis.set(room, JSON.stringify(jsonData));
+            }
           }
-        }
+        });
       });
     }
 
