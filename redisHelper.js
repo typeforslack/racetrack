@@ -80,15 +80,27 @@ const sendPara = (room) => {
     });
 };
 
+const createRoomForRandomRace = (userDetails) => {
+  let { room, dataStoredInTheRoom } = createUserDataObject(userDetails);
+
+  set(room, JSON.stringify(dataStoredInTheRoom)).then((reply) => {
+    if (reply) {
+      expire(room, expiryInSeconds);
+    }
+  });
+  return room;
+};
+
 module.exports = {
+  scanner,
   get,
   set,
   keys,
   expire,
-  del,
   getRoom,
   getParasTypedByTheseUsers,
   setParaTypedByTheseUsers,
+  createRoomForRandomRace,
   sendPara,
   getParasTyped,
 };
