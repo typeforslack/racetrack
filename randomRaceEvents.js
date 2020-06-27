@@ -27,48 +27,42 @@ exports.joinrandomrace = (socket) => {
       };
 
       if (keys.length != 0) {
-        for (let i = 0; i < keys.length; i++) {
-          redis.get(keys[i]).then(function (roomdata) {
-            roomdata = JSON.parse(roomdata);
-
-            if (roomdata.usercount < 4 && !roomdata.isStarted) {
-              setUser = true;
+        raceRoom = redis.getRaceRoom(keys);
+        raceRoom.then((room) => {
+          if (room.length > 0) {
+            redis.get(room[0]).then((roomdata) => {
+              roomdata = JSON.parse(roomdata);
               roomdata.usercount += 1;
               roomdata.users.push(userDetails);
-              redis.set(keys[i], JSON.stringify(roomdata)).then((reply) => {
+              redis.set(room[0], JSON.stringify(roomdata)).then((reply) => {
                 if (reply) {
-                  redis.expire(keys[i], expiryInSeconds);
+                  redis.expire(room[0], expiryInSeconds);
                 }
               });
-
-              // ADDING USER TO A EXISTING ROOM
-              console.log("ADDED TO A EXISTING ROOM", setUser);
-              socket.join(keys[i]);
-              return;
-            } else if (i == keys.length - 1 && !setUser) {
-              // IF ALL THE EXISTING ROOMS ARE FULL THEN CREATING A NEW ROOM AND ADDING THE USER TO THAT ROOM
-              console.log("NEW ROOM CREATED");
-              room = redis.createRoomForRandomRace(userDetails);
-
-              // ADDING THE ROOM TO THE QUEUE, AFTER 10 SECONDS A PARAGRAPH IS EMITTED THE USERS IN THE ROOM
-
-              paraToBeEmittedInRooms.add(
-                { room: room },
-                { delay: 10000, removeOnComplete: true }
-              );
-              socket.join(room);
-            }
+            });
+            socket.join(room[0]);
             return;
-          });
-        }
+          }
+          console.log("NEW ROOM CREATED");
+          room = redis.createRoomForRandomRace(userDetails);
+
+          // ADDING THE ROOM TO THE QUEUE, AFTER 10 SECONDS A PARAGRAPH IS EMITTED THE USERS IN THE ROOM
+
+          paraToBeEmittedInRooms.add(
+            { room: room },
+            { delay: 10000, removeOnComplete: true }
+          );
+          socket.join(room);
+        });
         return;
       }
+
       // CREATING INITIAL ROOM
 
       room = redis.createRoomForRandomRace(userDetails);
 
       // ADDING THE ROOM TO THE QUEUE, AFTER 10 SECONDS A PARAGRAPH IS EMITTED THE USERS IN THE ROOM
-      console.log("CREATED A NEW ROOM");
+      console.log("CREATED A INTIAL ROOM");
       paraToBeEmittedInRooms.add(
         { room: room },
         { delay: 10000, removeOnComplete: true }
