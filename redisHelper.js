@@ -91,6 +91,30 @@ const createRoomForRandomRace = (userDetails) => {
   return room;
 };
 
+const getRaceRoom = (keys) => {
+  let promises = [];
+  let rooms = [];
+  keys.forEach((room) => {
+    promises.push(
+      get(room).then((roomdata) => {
+        roomdata = JSON.parse(roomdata);
+        if (roomdata.usercount < 4 && !roomdata.isStarted) {
+          // console.log(
+          // `Usercount:${roomdata.usercount}, Started:${roomdata.isStarted}`
+          // );
+          // console.log("pushing", rooms);
+          rooms.push(room);
+          console.log(rooms);
+          // console.log("AfterPushing", rooms);
+        }
+      })
+    );
+  });
+  return Promise.all(promises).then((_) => {
+    return rooms;
+  });
+};
+
 module.exports = {
   scanner,
   get,
@@ -101,5 +125,6 @@ module.exports = {
   getParasTypedByTheseUsers,
   setParaTypedByTheseUsers,
   createRoomForRandomRace,
+  getRaceRoom,
   sendPara,
 };
