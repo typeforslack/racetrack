@@ -39,10 +39,6 @@ describe("Test getTypingPara", () => {
   });
 
   it("returns rejection to when err happens", async () => {
-    const body = {
-      name: "hello",
-    };
-
     axios.get.mockRejectedValue(new Error("Dummy Error"));
 
     await expect(getTypingPara([1, 2, 3])).rejects.toThrow("Dummy Error");

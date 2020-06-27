@@ -36,7 +36,7 @@ const getParasTypedByTheseUsers = (usernames) => {
           res = JSON.parse(res);
           paraTypedByTheUserInTheRoom.push(...res);
         }
-      }),
+      })
     );
   });
   return Promise.all(promises).then(() => {
@@ -54,7 +54,7 @@ const setParaTypedByTheseUsers = (usernames, paraFetchedId) => {
         jsonRes = res != null ? JSON.parse(res) : [];
         jsonRes.includes(paraFetchedId) ? null : jsonRes.push(paraFetchedId);
         setParasTyped(user, JSON.stringify(jsonRes));
-      }),
+      })
     );
   });
 
@@ -89,4 +89,5 @@ module.exports = {
   getParasTypedByTheseUsers,
   setParaTypedByTheseUsers,
   sendPara,
+  getParasTyped,
 };
