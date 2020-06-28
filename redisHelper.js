@@ -28,7 +28,6 @@ const setParasTyped = (username, value) => set(username + "-paras", value);
 const getParasTypedByTheseUsers = (usernames) => {
   const paraTypedByTheUserInTheRoom = [];
   const promises = [];
-
   usernames.forEach((username) => {
     promises.push(
       getParasTyped(username).then((res) => {
@@ -68,16 +67,11 @@ const sendPara = (room) => {
       redisRoom = JSON.parse(res);
       redisRoom.isStarted !== true ? (redisRoom.isStarted = true) : null;
       set(room, JSON.stringify(redisRoom));
-
       usernames = redisRoom.users.map((user) => user.name);
       return getParasTypedByTheseUsers(usernames);
     })
     .then((parasTyped) => {
       return getTypingPara(parasTyped);
-    })
-    .then((newPara) => {
-      setParaTypedByTheseUsers(usernames, newPara.id);
-      io.in(room).emit("PARA", newPara.para);
     });
 };
 

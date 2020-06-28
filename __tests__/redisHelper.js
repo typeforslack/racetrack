@@ -1,6 +1,8 @@
 const redis = require("../redisHelper");
-const { promisify } = require("util");
 const redisMock = require("redis-mock");
+const axios = require("axios");
+
+jest.mock("axios");
 
 const r = redisMock.createClient();
 
@@ -45,5 +47,27 @@ describe("Tests Basic Redis Functions", () => {
     await redis.setParaTypedByTheseUsers(["userOne", "userTwo"], 6);
     await expect(redis.getParasTyped("userOne")).resolves.toBe("[1,2,3,5,6]");
     await expect(redis.getParasTyped("userTwo")).resolves.toBe("[4,5,6]");
+  });
+
+  it("sendPara -> returns a axios response with paragraph details", async () => {
+    const body = { paraid: "[1]", paragraph: "Awesome !", taken_from: "Green" };
+    await redis.set(
+      "room-one",
+      JSON.stringify({
+        timestamp: 1314314,
+        users: [{ name: "userUno", socketId: "alskfhskladj" }],
+      })
+    );
+    await redis.set("userUno-paras", "[1]");
+    axios.get.mockResolvedValue({
+      status: 200,
+      body: JSON.stringify(body),
+    });
+    await expect(redis.sendPara("room-one")).resolves.toStrictEqual(body);
+    await expect(axios.get.mock.calls[0][1]).toStrictEqual({
+      params: {
+        data: "[1]",
+      },
+    });
   });
 });

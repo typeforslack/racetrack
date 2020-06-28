@@ -80,9 +80,15 @@ exports.joinrandomrace = (socket) => {
             socket.join(room);
             // console.log("Set Timeout");
             setTimeout(function () {
-              redis.sendPara(room).catch((err) => {
-                console.log(err);
-              });
+              redis
+                .sendPara(room)
+                .then((newPara) => {
+                  redis.setParaTypedByTheseUsers(usernames, newPara.id);
+                  io.in(room).emit("PARA", newPara.para);
+                })
+                .catch((err) => {
+                  console.log(err);
+                });
             }, 10000);
           }
         });

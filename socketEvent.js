@@ -83,9 +83,15 @@ exports.createorjoinroom = function (socket) {
 exports.startrace = function (socket) {
   socket.on("START_RACE", ({ room }) => {
     room = "room-" + room;
-    redis.sendPara(room).catch((err) => {
-      console.log(err);
-    });
+    redis
+      .sendPara(room)
+      .then((newPara) => {
+        setParaTypedByTheseUsers(usernames, newPara.id);
+        io.in(room).emit("PARA", newPara.para);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   });
 };
 
