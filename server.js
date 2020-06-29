@@ -1,4 +1,4 @@
-const { io, raceRooms, app, server } = require("./utils.js");
+const { io, app, server } = require("./utils.js");
 const { expiryInSeconds, PORT } = require("./constants.js");
 const redis = require("./redisHelper.js");
 
