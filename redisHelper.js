@@ -2,10 +2,8 @@ const client = require("redis");
 const mockClient = require("redis-mock");
 const { promisify } = require("util");
 const { getTypingPara } = require("./helper");
-const { io } = require("./utils.js");
 
 function getClient(env) {
-  console.log("ENVIRONMENT", env);
   if (env === "TEST") {
     return mockClient.createClient();
   }
@@ -35,7 +33,7 @@ const getParasTypedByTheseUsers = (usernames) => {
           res = JSON.parse(res);
           paraTypedByTheUserInTheRoom.push(...res);
         }
-      })
+      }),
     );
   });
   return Promise.all(promises).then(() => {
@@ -53,7 +51,7 @@ const setParaTypedByTheseUsers = (usernames, paraFetchedId) => {
         jsonRes = res != null ? JSON.parse(res) : [];
         jsonRes.includes(paraFetchedId) ? null : jsonRes.push(paraFetchedId);
         setParasTyped(user, JSON.stringify(jsonRes));
-      })
+      }),
     );
   });
 

@@ -1,7 +1,6 @@
-const { io } = require("./utils.js");
 const redis = require("./redisHelper");
 
-exports.disconnect = function (socket) {
+exports.disconnect = function (io, socket) {
   socket.on("disconnecting", () => {
     let disconnectingUser = io.sockets.adapter.sids[socket.id];
     let disconnectingUserRoom = Object.keys(disconnectingUser)[1];
@@ -13,7 +12,7 @@ exports.disconnect = function (socket) {
           if (jsonData.users[i].socketId == socket.id) {
             io.to(disconnectingUserRoom).emit(
               "DISCONNECTED",
-              `${jsonData.users[i].name} has left the race`
+              `${jsonData.users[i].name} has left the race`,
             );
             jsonData.users.splice(i, 1);
             redis.set(disconnectingUserRoom, JSON.stringify(jsonData));
@@ -26,7 +25,7 @@ exports.disconnect = function (socket) {
   });
 };
 
-exports.createorjoinroom = function (socket) {
+exports.createorjoinroom = function (io, socket) {
   socket.on("create/join", async ({ room, username }) => {
     /*  
             {
@@ -39,7 +38,7 @@ exports.createorjoinroom = function (socket) {
     if (userExistsAlready) {
       io.to(socket.id).emit(
         "ALREADY_JOINED",
-        "You have already joined the room!"
+        "You have already joined the room!",
       );
     } else {
       return redis
@@ -80,7 +79,7 @@ exports.createorjoinroom = function (socket) {
   });
 };
 
-exports.startrace = function (socket) {
+exports.startrace = function (io, socket) {
   socket.on("START_RACE", ({ room }) => {
     room = "room-" + room;
     redis
@@ -95,14 +94,14 @@ exports.startrace = function (socket) {
   });
 };
 
-exports.typing = function (socket) {
+exports.typing = function (io, socket) {
   socket.on("TYPING", ({ room, message }) => {
     console.log(message);
     socket.to(room).emit("TYPING", message);
   });
 };
 
-exports.stoptyping = function (socket) {
+exports.stoptyping = function (io, socket) {
   socket.on("donetyping", ({ username }) => {
     socket.to(room).emit("donetyping", "username has finished typing");
   });
