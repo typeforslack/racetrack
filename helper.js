@@ -2,7 +2,7 @@ const uuid = require("uuid");
 const axios = require("axios");
 const constants = require("./constants");
 
-const getTypingPara = function (parasTyped) {
+const getTypingPara = function (parasTyped, usernames) {
   return new Promise((res, rej) => {
     axios
       .get(constants.TFSBackendURL, {
@@ -10,7 +10,7 @@ const getTypingPara = function (parasTyped) {
       })
       .then((response) => {
         const jsonBody = JSON.parse(response.body);
-        res(jsonBody);
+        res({ jsonBody, usernames });
       })
       .catch((err) => rej(err));
   });

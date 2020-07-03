@@ -33,7 +33,7 @@ const getParasTypedByTheseUsers = (usernames) => {
           res = JSON.parse(res);
           paraTypedByTheUserInTheRoom.push(...res);
         }
-      }),
+      })
     );
   });
   return Promise.all(promises).then(() => {
@@ -51,7 +51,7 @@ const setParaTypedByTheseUsers = (usernames, paraFetchedId) => {
         jsonRes = res != null ? JSON.parse(res) : [];
         jsonRes.includes(paraFetchedId) ? null : jsonRes.push(paraFetchedId);
         setParasTyped(user, JSON.stringify(jsonRes));
-      }),
+      })
     );
   });
 
@@ -68,8 +68,8 @@ const sendPara = (room) => {
       usernames = redisRoom.users.map((user) => user.name);
       return getParasTypedByTheseUsers(usernames);
     })
-    .then((parasTyped) => {
-      return getTypingPara(parasTyped);
+    .then((uniqueParaTypedByTheUserInTheRoom) => {
+      return getTypingPara(uniqueParaTypedByTheUserInTheRoom, usernames);
     });
 };
 

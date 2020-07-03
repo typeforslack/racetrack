@@ -1,9 +1,10 @@
 const ioClient = require("socket.io-client");
 const mockRedis = require("redis-mock");
 const http = require("http");
+const axios = require("axios");
 
-const socketEvents = require("../socketEvent");
 const sockets = require("../sockets");
+jest.mock("axios");
 
 const redis = mockRedis.createClient();
 let socket, server, io;
@@ -25,6 +26,7 @@ beforeAll((done) => {
 afterAll((done) => {
   io.close();
   server.close();
+  redis.flushall();
   done();
 });
 
@@ -45,11 +47,11 @@ beforeEach((done) => {
   });
 });
 
-afterEach((done) => {
+afterEach(async (done) => {
   if (socket.connected) {
     socket.disconnect();
   }
-  redis.flushall();
+
   done();
 });
 
@@ -70,7 +72,7 @@ describe("Test for various scenario for createorjoinroom socket event", () => {
     socket.on("USER_JOINED", (msg) => {
       expect(msg).toBe("Room doesn't exists");
       expect(
-        io.sockets.adapter.sids[responseSocket.id]["room-zeta"],
+        io.sockets.adapter.sids[responseSocket.id]["room-zeta"]
       ).toBeFalsy();
       done();
     });
@@ -88,7 +90,7 @@ describe("Test for various scenario for createorjoinroom socket event", () => {
       });
 
       expect(
-        io.sockets.adapter.sids[responseSocket.id]["room-eplison"],
+        io.sockets.adapter.sids[responseSocket.id]["room-eplison"]
       ).toBeTruthy();
 
       redis.get("room-eplison", (err, res) => {
@@ -109,14 +111,14 @@ describe("Test for various scenario for createorjoinroom socket event", () => {
         isStarted: true,
         timestamp: Math.floor(Date.now() / 1000),
         users: [],
-      }),
+      })
     );
     socket.emit("create/join", { username: "userOne", room: "zeta" });
 
     socket.on("RACE_STARTED", (msg) => {
       expect(msg).toBe("Race has already started");
       expect(
-        io.sockets.adapter.sids[responseSocket.id]["room-zeta"],
+        io.sockets.adapter.sids[responseSocket.id]["room-zeta"]
       ).toBeFalsy();
       done();
     });
@@ -128,14 +130,63 @@ describe("Test for various scenario for createorjoinroom socket event", () => {
       JSON.stringify({
         timestamp: Math.floor(Date.now() / 1000),
         users: [],
-      }),
+      })
     );
 
     socket.emit("create/join", { username: "userOne", room: "alpha" });
     await wait(500);
-    socket.emit("create/join", { username: "userTwo", room: "alpha" });
+    socket.emit("create/join", { username: "userOne", room: "alpha" });
     socket.on("ALREADY_JOINED", (msg) => {
       expect(msg).toBe("You have already joined the room!");
+      done();
+    });
+  });
+});
+
+describe("Test for startRace socket event, Expected to emit  para to the users in the room", () => {
+  it('case #1 -> Emitting "START_RACE" event from the client during race between friends', async (done) => {
+    const room = { timestamp: Math.floor(Date.now() / 1000), users: [] };
+    const body = { id: 1, para: "Awesome !", taken_from: "Green" };
+
+    clientSocket2 = ioClient.connect(`http://localhost:3000`, {
+      "reconnection delay": 0,
+      "reopen delay": 0,
+      "force new connection": true,
+      transports: ["websocket"],
+    });
+
+    redis.set("room-beta", JSON.stringify(room));
+
+    axios.get.mockResolvedValue({
+      status: 200,
+      body: JSON.stringify(body),
+    });
+
+    socket.emit("create/join", { username: "AnotherUser", room: "beta" });
+    await wait(100);
+    clientSocket2.emit("create/join", {
+      username: "AnotherUserTwo",
+      room: "beta",
+    });
+    await wait(100);
+    socket.emit("START_RACE", { room: "beta" });
+    clientSocket2.on("PARA", (msg) => {
+      expect(msg).toBe("Awesome !");
+    });
+    socket.on("PARA", (msg) => {
+      expect(msg).toBe("Awesome !");
+    });
+    await wait(10);
+    redis.get("room-beta", (err, response) => {
+      response = JSON.parse(response);
+      expect(response.isStarted).toBeTruthy();
+      expect(response.users.length).toBe(2);
+    });
+    redis.get("AnotherUser-paras", (err, response) => {
+      expect(JSON.parse(response)).toStrictEqual([1]);
+    });
+    redis.get("AnotherUserTwo-paras", (err, response) => {
+      expect(JSON.parse(response)).toStrictEqual([1]);
       done();
     });
   });

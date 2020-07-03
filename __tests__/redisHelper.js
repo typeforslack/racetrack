@@ -63,7 +63,12 @@ describe("Tests Basic Redis Functions", () => {
       status: 200,
       body: JSON.stringify(body),
     });
-    await expect(redis.sendPara("room-one")).resolves.toStrictEqual(body);
+    let response = {
+      jsonBody: body,
+      usernames: ["userUno"],
+    };
+
+    await expect(redis.sendPara("room-one")).resolves.toStrictEqual(response);
     await expect(axios.get.mock.calls[0][1]).toStrictEqual({
       params: {
         data: "[1]",

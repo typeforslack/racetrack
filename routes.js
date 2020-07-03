@@ -1,4 +1,4 @@
-const { expiryInSeconds, PORT } = require("./constants.js");
+const { expiryInSeconds } = require("./constants.js");
 const redis = require("./redisHelper.js");
 
 const helper = require("./helper.js");
@@ -31,7 +31,7 @@ function init(app) {
       `room-${hash}`,
       JSON.stringify(dataStoredInTheRaceRoom),
       "EX",
-      expiryInSeconds,
+      expiryInSeconds
     );
     res.json(data);
   });

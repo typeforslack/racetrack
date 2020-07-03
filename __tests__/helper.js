@@ -30,12 +30,19 @@ describe("Test getTypingPara", () => {
       name: "hello",
     };
 
+    const resp = {
+      jsonBody: body,
+      usernames: ["userOne", "userTwo"],
+    };
+
     axios.get.mockResolvedValue({
       status: 200,
       body: JSON.stringify(body),
     });
 
-    await expect(getTypingPara([1, 2, 3])).resolves.toStrictEqual(body);
+    await expect(
+      getTypingPara([1, 2, 3], ["userOne", "userTwo"])
+    ).resolves.toStrictEqual(resp);
   });
 
   it("returns rejection to when err happens", async () => {

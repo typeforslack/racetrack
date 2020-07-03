@@ -12,7 +12,7 @@ exports.disconnect = function (io, socket) {
           if (jsonData.users[i].socketId == socket.id) {
             io.to(disconnectingUserRoom).emit(
               "DISCONNECTED",
-              `${jsonData.users[i].name} has left the race`,
+              `${jsonData.users[i].name} has left the race`
             );
             jsonData.users.splice(i, 1);
             redis.set(disconnectingUserRoom, JSON.stringify(jsonData));
@@ -38,7 +38,7 @@ exports.createorjoinroom = function (io, socket) {
     if (userExistsAlready) {
       io.to(socket.id).emit(
         "ALREADY_JOINED",
-        "You have already joined the room!",
+        "You have already joined the room!"
       );
     } else {
       return redis
@@ -84,9 +84,9 @@ exports.startrace = function (io, socket) {
     room = "room-" + room;
     redis
       .sendPara(room)
-      .then((newPara) => {
-        setParaTypedByTheseUsers(usernames, newPara.id);
-        io.in(room).emit("PARA", newPara.para);
+      .then(({ jsonBody, usernames }) => {
+        redis.setParaTypedByTheseUsers(usernames, jsonBody.id);
+        io.in(room).emit("PARA", jsonBody.para);
       })
       .catch((err) => {
         console.log(err);
