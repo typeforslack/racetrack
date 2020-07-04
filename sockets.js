@@ -19,7 +19,7 @@ module.exports = {
 
       socketEvent.stoptyping(io, socket);
 
-      //   randomRaceEvent.joinrandomrace(io, socket);
+      randomRaceEvent.joinrandomrace(io, socket);
     });
 
     return io;

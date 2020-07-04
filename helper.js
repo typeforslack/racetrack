@@ -9,7 +9,7 @@ const getTypingPara = function (parasTyped, usernames) {
         params: { data: JSON.stringify(parasTyped) },
       })
       .then((response) => {
-        const jsonBody = JSON.parse(response.body);
+        const jsonBody = response.data;
         res({ jsonBody, usernames });
       })
       .catch((err) => rej(err));

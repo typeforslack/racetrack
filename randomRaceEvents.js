@@ -1,9 +1,8 @@
-const { io } = require("./utils.js");
 const redis = require("./redisHelper");
 const helper = require("./helper");
 const { expiryInSeconds } = require("./constants");
 
-exports.joinrandomrace = (socket) => {
+exports.joinrandomrace = (io, socket) => {
   // Get a room that is been created in the last 10 seconds
 
   /*
@@ -37,9 +36,15 @@ exports.joinrandomrace = (socket) => {
         );
         socket.join(room);
         setTimeout(function () {
-          redis.sendPara(room).catch((err) => {
-            console.log(err);
-          });
+          redis
+            .sendPara(room)
+            .then(({ jsonBody, usernames }) => {
+              redis.setParaTypedByTheseUsers(usernames, jsonBody.id);
+              io.in(room).emit("PARA", jsonBody.para);
+            })
+            .catch((err) => {
+              console.log(err);
+            });
         }, 10000);
         return;
       }
@@ -57,7 +62,6 @@ exports.joinrandomrace = (socket) => {
             setUser = true;
             roomdata.usercount += 1;
             roomdata.users.push(userDetails);
-            // console.log(roomdata);
             redis.set(keys[i], JSON.stringify(roomdata));
             socket.join(keys[i]);
             return;
@@ -78,13 +82,12 @@ exports.joinrandomrace = (socket) => {
               expiryInSeconds
             );
             socket.join(room);
-            // console.log("Set Timeout");
             setTimeout(function () {
               redis
                 .sendPara(room)
-                .then((newPara) => {
-                  redis.setParaTypedByTheseUsers(usernames, newPara.id);
-                  io.in(room).emit("PARA", newPara.para);
+                .then(({ jsonBody, usernames }) => {
+                  redis.setParaTypedByTheseUsers(usernames, jsonBody.id);
+                  io.in(room).emit("PARA", jsonBody.para);
                 })
                 .catch((err) => {
                   console.log(err);

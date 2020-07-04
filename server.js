@@ -2,6 +2,7 @@ const http = require("http");
 const express = require("express");
 const routes = require("./routes");
 const sockets = require("./sockets");
+const { PORT } = require("./constants");
 
 const app = express();
 const server = http.createServer(app);

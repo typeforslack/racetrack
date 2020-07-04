@@ -37,7 +37,7 @@ describe("Test getTypingPara", () => {
 
     axios.get.mockResolvedValue({
       status: 200,
-      body: JSON.stringify(body),
+      data: body,
     });
 
     await expect(

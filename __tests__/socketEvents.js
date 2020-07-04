@@ -4,6 +4,7 @@ const http = require("http");
 const axios = require("axios");
 
 const sockets = require("../sockets");
+
 jest.mock("axios");
 
 const redis = mockRedis.createClient();
@@ -47,11 +48,10 @@ beforeEach((done) => {
   });
 });
 
-afterEach(async (done) => {
+afterEach((done) => {
   if (socket.connected) {
     socket.disconnect();
   }
-
   done();
 });
 
@@ -159,7 +159,7 @@ describe("Test for startRace socket event, Expected to emit  para to the users i
 
     axios.get.mockResolvedValue({
       status: 200,
-      body: JSON.stringify(body),
+      data: body,
     });
 
     socket.emit("create/join", { username: "AnotherUser", room: "beta" });
@@ -190,4 +190,46 @@ describe("Test for startRace socket event, Expected to emit  para to the users i
       done();
     });
   });
+});
+
+describe("Test for joining random race", () => {
+  it("Expect user to join a random room and emit a para to the room", async (done) => {
+    const body = { id: 1, para: "Awesome !", taken_from: "Green" };
+
+    clientSocket2 = ioClient.connect(`http://localhost:3000`, {
+      "reconnection delay": 0,
+      "reopen delay": 0,
+      "force new connection": true,
+      transports: ["websocket"],
+    });
+
+    axios.get.mockResolvedValue({
+      status: 200,
+      data: body,
+    });
+
+    socket.emit("JOIN_RANDOM_RACE", { username: "randomRaceUserOne" });
+
+    await wait(1000);
+
+    clientSocket2.emit("JOIN_RANDOM_RACE", { username: "randomRaceUserTwo" });
+
+    clientSocket2.on("PARA", (msg) => {
+      expect(msg).toBe("Awesome !");
+    });
+
+    socket.on("PARA", (msg) => {
+      expect(msg).toBe("Awesome !");
+    });
+
+    await wait(10000);
+
+    redis.get("randomRaceUserOne-paras", (err, response) => {
+      expect(JSON.parse(response)).toStrictEqual([1]);
+    });
+    redis.get("randomRaceUserTwo-paras", (err, response) => {
+      expect(JSON.parse(response)).toStrictEqual([1]);
+      done();
+    });
+  }, 15000);
 });

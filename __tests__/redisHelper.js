@@ -61,7 +61,7 @@ describe("Tests Basic Redis Functions", () => {
     await redis.set("userUno-paras", "[1]");
     axios.get.mockResolvedValue({
       status: 200,
-      body: JSON.stringify(body),
+      data: body,
     });
     let response = {
       jsonBody: body,
