@@ -1,4 +1,4 @@
-## RACETRACK - Websocket for TypeForSlack
+## RACETRACK - Websocket for Keystrokes
 **Requirements**
 
  - Node.js
