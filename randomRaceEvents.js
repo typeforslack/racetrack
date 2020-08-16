@@ -18,8 +18,8 @@ exports.joinrandomrace = (socket) => {
         random-race-room-2twodous:{bot:0,usercount:4,timestamp:13389734,users=[{name:"user1",socketId:"jdhfla359472kdsjhfkew5"}]}
      }
   */
+
   socket.on("JOIN_RANDOM_RACE", ({ username }) => {
-    var setUser = false;
     redis.scanner.scan("random-race-room*", (err, keys) => {
       userDetails = {
         name: username,

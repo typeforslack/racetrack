@@ -21,6 +21,7 @@
   "dependencies": {
     "axios": "^0.19.2",
     "bull": "^3.14.0",
+    "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "node-redis-scan": "^1.1.1",
     "redis": "^3.0.2",
