@@ -214,15 +214,15 @@ describe("Test for joining random race", () => {
 
     clientSocket2.emit("JOIN_RANDOM_RACE", { username: "randomRaceUserTwo" });
 
+    await wait(10000);
+
     clientSocket2.on("PARA", (msg) => {
       expect(msg).toBe("Awesome !");
     });
 
     socket.on("PARA", (msg) => {
-      expect(msg).toBe("Awesome !");
+      expect(msg).toBe("Awesome");
     });
-
-    await wait(10000);
 
     redis.get("randomRaceUserOne-paras", (err, response) => {
       expect(JSON.parse(response)).toStrictEqual([1]);

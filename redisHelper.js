@@ -2,7 +2,7 @@ const client = require("redis");
 const mockClient = require("redis-mock");
 const { expiryInSeconds } = require("./constants");
 const { promisify } = require("util");
-const { getTypingPara } = require("./helper");
+const { getTypingPara, createUserDataObject } = require("./helper");
 
 function getClient(env) {
   if (env === "TEST") {
@@ -65,7 +65,10 @@ const sendPara = (room) => {
   return get(room)
     .then((res) => {
       redisRoom = JSON.parse(res);
-      redisRoom.isStarted !== true ? (redisRoom.isStarted = true) : null;
+      if (redisRoom.isStarted == true) {
+        throw new Error("Race has started !");
+      }
+      redisRoom.isStarted = true;
       set(room, JSON.stringify(redisRoom)).then((reply) => {
         if (reply) {
           expire(room, expiryInSeconds);
@@ -75,9 +78,27 @@ const sendPara = (room) => {
       usernames = redisRoom.users.map((user) => user.name);
       return getParasTypedByTheseUsers(usernames);
     })
-    .then((uniqueParaTypedByTheUserInTheRoom) => {
-      return getTypingPara(uniqueParaTypedByTheUserInTheRoom, usernames);
+    .then((parasTyped) => {
+      return getTypingPara(parasTyped, usernames);
     });
+};
+
+const getRaceRoom = (keys) => {
+  let promises = [];
+  let rooms = [];
+  keys.forEach((room) => {
+    promises.push(
+      get(room).then((roomdata) => {
+        roomdata = JSON.parse(roomdata);
+        if (roomdata.usercount < 4 && !roomdata.isStarted) {
+          rooms.push(room);
+        }
+      })
+    );
+  });
+  return Promise.all(promises).then((_) => {
+    return rooms;
+  });
 };
 
 const createRoomForRandomRace = (userDetails) => {
@@ -91,32 +112,7 @@ const createRoomForRandomRace = (userDetails) => {
   return room;
 };
 
-const getRaceRoom = (keys) => {
-  let promises = [];
-  let rooms = [];
-  keys.forEach((room) => {
-    promises.push(
-      get(room).then((roomdata) => {
-        roomdata = JSON.parse(roomdata);
-        if (roomdata.usercount < 4 && !roomdata.isStarted) {
-          // console.log(
-          // `Usercount:${roomdata.usercount}, Started:${roomdata.isStarted}`
-          // );
-          // console.log("pushing", rooms);
-          rooms.push(room);
-          console.log(rooms);
-          // console.log("AfterPushing", rooms);
-        }
-      })
-    );
-  });
-  return Promise.all(promises).then((_) => {
-    return rooms;
-  });
-};
-
 module.exports = {
-  scanner,
   get,
   set,
   keys,
@@ -125,7 +121,7 @@ module.exports = {
   getParasTypedByTheseUsers,
   setParaTypedByTheseUsers,
   createRoomForRandomRace,
-  getRaceRoom,
   sendPara,
   getParasTyped,
+  getRaceRoom,
 };

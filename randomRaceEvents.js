@@ -1,6 +1,7 @@
 const redis = require("./redisHelper");
 const { expiryInSeconds } = require("./constants");
 const Queue = require("bull");
+var socket_server;
 
 const paraToBeEmittedInRooms = new Queue("roomsQueue", {
   redis: {
@@ -9,7 +10,8 @@ const paraToBeEmittedInRooms = new Queue("roomsQueue", {
   },
 });
 
-exports.joinrandomrace = (socket) => {
+exports.joinrandomrace = (io, socket) => {
+  socket_server = io;
   // Get a room that is been created in the last 5 seconds and having capacity of less than 4 users
 
   /*
@@ -20,12 +22,11 @@ exports.joinrandomrace = (socket) => {
   */
 
   socket.on("JOIN_RANDOM_RACE", ({ username }) => {
-    redis.scanner.scan("random-race-room*", (err, keys) => {
+    redis.keys("random-race-room*").then((keys) => {
       userDetails = {
         name: username,
         socketId: socket.id,
       };
-
       if (keys.length != 0) {
         raceRoom = redis.getRaceRoom(keys);
         raceRoom.then((room) => {
@@ -67,7 +68,6 @@ exports.joinrandomrace = (socket) => {
         { room: room },
         { delay: 10000, removeOnComplete: true }
       );
-
       socket.join(room);
     });
   });
@@ -76,8 +76,14 @@ exports.joinrandomrace = (socket) => {
 // QUEUE TO TRIGGER SOCKET EVENT TO EMIT PARAGRAPH TO THE USERS IN THE JOINED ROOM
 
 paraToBeEmittedInRooms.process((job, done) => {
-  redis.sendPara(job.data.room).catch((err) => {
-    console.log(err);
-  });
+  redis
+    .sendPara(job.data.room)
+    .then(({ jsonBody, usernames }) => {
+      redis.setParaTypedByTheseUsers(usernames, jsonBody.id);
+      socket_server.in(job.data.room).emit("PARA", jsonBody.para);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
   done();
 });
