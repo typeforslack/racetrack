@@ -4,7 +4,7 @@
   "description": "Websocket using Node.js",
   "main": "index.js",
   "scripts": {
-    "test": "ENV='TEST' jest",
+    "test": "ENV='TEST' jest --forceExit",
     "test:watch": "npm run test -- --watch",
     "start": "nodemon server.js"
   },

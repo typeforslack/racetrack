@@ -134,7 +134,9 @@ describe("Test for various scenario for createorjoinroom socket event", () => {
     );
 
     socket.emit("create/join", { username: "userOne", room: "alpha" });
+
     await wait(500);
+
     socket.emit("create/join", { username: "userOne", room: "alpha" });
     socket.on("ALREADY_JOINED", (msg) => {
       expect(msg).toBe("You have already joined the room!");
@@ -163,12 +165,16 @@ describe("Test for startRace socket event, Expected to emit  para to the users i
     });
 
     socket.emit("create/join", { username: "AnotherUser", room: "beta" });
+
     await wait(100);
+
     clientSocket2.emit("create/join", {
       username: "AnotherUserTwo",
       room: "beta",
     });
+
     await wait(100);
+
     socket.emit("START_RACE", { room: "beta" });
     clientSocket2.on("PARA", (msg) => {
       expect(msg).toBe("Awesome !");
@@ -176,7 +182,9 @@ describe("Test for startRace socket event, Expected to emit  para to the users i
     socket.on("PARA", (msg) => {
       expect(msg).toBe("Awesome !");
     });
+
     await wait(10);
+
     redis.get("room-beta", (err, response) => {
       response = JSON.parse(response);
       expect(response.isStarted).toBeTruthy();
@@ -210,19 +218,19 @@ describe("Test for joining random race", () => {
 
     socket.emit("JOIN_RANDOM_RACE", { username: "randomRaceUserOne" });
 
-    await wait(1000);
+    await wait(100);
 
     clientSocket2.emit("JOIN_RANDOM_RACE", { username: "randomRaceUserTwo" });
-
-    await wait(10000);
 
     clientSocket2.on("PARA", (msg) => {
       expect(msg).toBe("Awesome !");
     });
 
     socket.on("PARA", (msg) => {
-      expect(msg).toBe("Awesome");
+      expect(msg).toBe("Awesome !");
     });
+
+    await wait(10000);
 
     redis.get("randomRaceUserOne-paras", (err, response) => {
       expect(JSON.parse(response)).toStrictEqual([1]);
