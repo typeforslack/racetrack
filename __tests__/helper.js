@@ -1,5 +1,6 @@
 const { getTypingPara } = require("../helper");
 const axios = require("axios");
+const constants=require('../constants')
 require("dotenv").config();
 
 jest.mock("axios");
@@ -17,7 +18,7 @@ describe("Test getTypingPara", () => {
 
     await getTypingPara([1, 2, 3]);
     expect(axios.get.mock.calls.length).toBe(1);
-    expect(axios.get.mock.calls[0][0]).toBe(process.env.KSBackendURL);
+    expect(axios.get.mock.calls[0][0]).toBe(constants.KSBackend);
     expect(axios.get.mock.calls[0][1]).toStrictEqual({
       params: {
         data: "[1,2,3]",

@@ -3,3 +3,6 @@ node_modules/
 client.html
 duplicate.js
 .env
+coverage/lcov-report
+coverage/coverage-summary.json
+coverage/lcov.info

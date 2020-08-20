@@ -1,4 +1,12 @@
 ## RACETRACK - Websocket for TypeForSlack
+
+![Test Coverage](/coverage/badge-branches.svg)
+![Test Coverage](/coverage/badge-functions.svg)
+![Test Coverage](/coverage/badge-lines.svg)
+![Test Coverage](/coverage/badge-statements.svg)
+
+![GitHub Action](https://github.com/typeforslack/racetrack/workflows/CI/badge.svg)
+
 **Requirements**
 
  - Node.js

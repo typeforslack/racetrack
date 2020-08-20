@@ -1,11 +1,12 @@
 const uuid = require("uuid");
 const axios = require("axios");
+const constants=require('./constants')
 require("dotenv").config();
 
 const getTypingPara = function (parasTyped, usernames) {
   return new Promise((res, rej) => {
     axios
-      .get(process.env.KSBackendURL, {
+      .get(constants.KSBackend, {
         params: { data: JSON.stringify(parasTyped) },
       })
       .then((response) => {

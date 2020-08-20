@@ -4,7 +4,7 @@
   "description": "Websocket using Node.js",
   "main": "index.js",
   "scripts": {
-    "test": "ENV='TEST' jest --forceExit",
+    "test": "ENV='TEST' jest --coverage --forceExit && jest-coverage-badges",
     "test:watch": "npm run test -- --watch",
     "start": "nodemon server.js"
   },
@@ -30,7 +30,15 @@
   },
   "devDependencies": {
     "jest": "^26.0.1",
+    "jest-coverage-badges": "^1.1.2",
     "nodemon": "^2.0.4",
     "redis-mock": "^0.49.0"
+  },
+  "jest": {
+    "coverageReporters": [
+      "json-summary",
+      "text",
+      "lcov"
+    ]
   }
 }
