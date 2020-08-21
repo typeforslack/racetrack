@@ -1,12 +1,13 @@
-## RACETRACK - Websocket for TypeForSlack
+# RACETRACK
+## Websocket server for KeyStrokes
 
+![GitHub Action](https://github.com/typeforslack/racetrack/workflows/CI/badge.svg)
 ![Test Coverage](/coverage/badge-branches.svg)
 ![Test Coverage](/coverage/badge-functions.svg)
 ![Test Coverage](/coverage/badge-lines.svg)
 ![Test Coverage](/coverage/badge-statements.svg)
 
-![GitHub Action](https://github.com/typeforslack/racetrack/workflows/CI/badge.svg)
-
+## Setup
 **Requirements**
 
  - Node.js
@@ -24,6 +25,7 @@
  - The above command will download and run the redis in a docker.
  - Run `npm start` to start the server
 
+## Contracts
 **Socket Events**
 
  - **create/join event:** It basically allows a user to join a existing race track or creates a new racetrack and joins them to it
